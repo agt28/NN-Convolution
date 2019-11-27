@@ -1,5 +1,6 @@
 from __future__ import print_function
-from configs import train_path, test_path
+from configs import train_path101 as train_path
+from configs import test_path101 as test_path
 import keras
 from keras.preprocessing.image import ImageDataGenerator
 from keras.models import Sequential
@@ -7,16 +8,24 @@ from keras.layers import Dense, Dropout, Activation, Flatten
 from keras.layers import Conv2D, MaxPooling2D
 import os
 
-tensorboard_callback = keras.callbacks.TensorBoard(log_dir='foodsmallruns')
+tensorboard_callback = keras.callbacks.TensorBoard(log_dir='food101runs-RMS')
 
 batch_size = 10
-num_classes = 2
+num_classes = 10
 epochs = 10
 data_augmentation = True
 save_dir = os.path.join(os.getcwd(), 'archive')
-model_name = 'kerasfoodsmall.h5'
-
+model_name = 'kerasfood101-mRMS.h5'
 model_path = os.path.join(save_dir, model_name)
+
+# Optimizers
+opt1 = keras.optimizers.RMSprop(learning_rate=0.0003, decay=1e-6)
+opt3 = keras.optimizers.Adagrad(learning_rate=0.01)
+opt5 = keras.optimizers.Adam(learning_rate=0.001, beta_1=0.9, beta_2=0.999, amsgrad=False)
+
+""""
+DATA GENERATOR START FROM HERE
+"""
 
 train_datagen = ImageDataGenerator(
         rescale=1./255,
@@ -38,9 +47,17 @@ train_generator = train_datagen.flow_from_directory(
 test_generator = test_datagen.flow_from_directory(
         directory=test_path,
         target_size=(128, 128),
-        batch_size=10,
+        batch_size=32,
         class_mode='categorical')
 
+""""
+DATA GENERATOR ENDS HERE
+"""
+
+
+""""
+MODEL BUILDING START FROM HERE
+"""
 
 model = Sequential()
 model.add(Conv2D(32, (3, 3), padding='same',
@@ -66,10 +83,12 @@ model.add(Dropout(0.5))
 model.add(Dense(num_classes))
 model.add(Activation('softmax'))
 
-# initiate RMSprop optimizer (Original)
-# opt = keras.optimizers.RMSprop(learning_rate=0.0001, decay=1e-6)
-# New Optimizer 
-opt = keras.optimizers.Adagrad(learning_rate=0.01)
+""""
+MODEL BUILDING ENDS HERE
+"""
+
+# initiate RMSprop optimizer
+opt = opt5
 
 if os.path.exists(model_path):
     print("LOADING OLD MODEL")
